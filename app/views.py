@@ -54,6 +54,18 @@ def login():
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
+
+@app.route('/secure-page')
+@login_required
+def secure_page():
+    return render_template('secure_page.html')
+
+@app.route('/logout')
+def logout():
+    login_user()
+    flash("You are logged out : Enjoy the rest of your day!", 'info')
+    return redirect(url_for('home'))
+
 @login_manager.user_loader
 def load_user(id):
     return UserProfile.query.get(int(id))
