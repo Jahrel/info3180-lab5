@@ -32,28 +32,36 @@ def about():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
-    if request.method == "POST":
+    if request.method == "POST" and form.validate_on_submit():
         # change this to actually validate the entire form submission
         # and not just one field
 
-        if form.validate_on_submit():
-            username = form.username.data
-            password = form.password.data
+        
+        username = form.username.data
+        password = form.password.data
 
-            user = UserProfile.query.filter_by(username=username).first()
-            if user is not None and check_password_hash(user.password, password):
-                login_user(user)
+        user = UserProfile.query.filter_by(username=username).first()
+        if user is not None and check_password_hash(user.password, password):
+            login_user(user)
 
-            # remember to flash a message to the user
+        # remember to flash a message to the user
             flash ("Login Successful", 'success')
             return redirect(url_for("secure_page")) # they should be redirected to a secure-page route instead
         else:
             flash("Login Failed : Username or Password Incorrect", 'danger')
+    flash_errors(form)
     return render_template("login.html", form=form)
 
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'danger')
 
 @app.route('/secure-page')
 @login_required
@@ -62,8 +70,8 @@ def secure_page():
 
 @app.route('/logout')
 def logout():
-    login_user()
-    flash("You are logged out : Enjoy the rest of your day!", 'info')
+    logout_user()
+    flash("You are logged out : Enjoy the rest of your day!", 'danger')
     return redirect(url_for('home'))
 
 @login_manager.user_loader
